@@ -3,23 +3,42 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { ThemeProvider } from '@/components/theme-provider';
+import { Sidebar } from '@/components/layout/sidebar';
+import { Header } from '@/components/layout/header';
+import { Dashboard } from '@/pages/dashboard';
+import { AIChat } from '@/pages/ai-chat';
+import { SystemMonitor } from '@/pages/system-monitor';
+import { Documentation } from '@/pages/documentation';
+import { AngelaGame } from '@/pages/angela-game';
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider defaultTheme="dark" storageKey="unified-ai-theme">
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="flex h-screen bg-background">
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Header />
+              <main className="flex-1 overflow-auto p-6">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/chat" element={<AIChat />} />
+                  <Route path="/monitor" element={<SystemMonitor />} />
+                  <Route path="/docs" element={<Documentation />} />
+                  <Route path="/game" element={<AngelaGame />} />
+                  <Route path="*" element={<Dashboard />} />
+                </Routes>
+              </main>
+            </div>
+          </div>
+        </BrowserRouter>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
