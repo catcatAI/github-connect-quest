@@ -2,6 +2,9 @@
 
 ## Project info
 
+For project collaboration guidelines, please see the [PROJECTS_COLLABORATION_GUIDE_Version2.md](../Unified-AI-Project/PROJECTS_COLLABORATION_GUIDE_Version2.md).
+
+
 **URL**: https://lovable.dev/projects/ff5fbce0-a2f3-4528-aaa5-5be00dd176a8
 
 ## How can I edit this code?
