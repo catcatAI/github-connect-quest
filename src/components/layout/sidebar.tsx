@@ -5,7 +5,8 @@ import {
   Activity, 
   BookOpen, 
   Gamepad2,
-  Brain
+  Brain,
+  Network
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,7 @@ const navItems = [
   { to: '/monitor', icon: Activity, label: '系統監控' },
   { to: '/docs', icon: BookOpen, label: '文檔' },
   { to: '/game', icon: Gamepad2, label: "Angela's World" },
+  { to: '/architecture-editor', icon: Network, label: '架構編輯器' },
 ];
 
 export function Sidebar() {

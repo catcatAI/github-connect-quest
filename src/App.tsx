@@ -11,6 +11,7 @@ import { AIChat } from '@/pages/ai-chat';
 import { SystemMonitor } from '@/pages/system-monitor';
 import { Documentation } from '@/pages/documentation';
 import { AngelaGame } from '@/pages/angela-game';
+import ArchitectureEditor from '@/pages/architecture-editor';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
                   <Route path="/monitor" element={<SystemMonitor />} />
                   <Route path="/docs" element={<Documentation />} />
                   <Route path="/game" element={<AngelaGame />} />
+                  <Route path="/architecture-editor" element={<ArchitectureEditor />} />
                   <Route path="*" element={<Dashboard />} />
                 </Routes>
               </main>
