@@ -14,6 +14,7 @@ import { AngelaGame } from '@/pages/angela-game';
 import ArchitectureEditor from '@/pages/architecture-editor';
 import FunctionEditor from '@/pages/function-editor';
 import CodeEditor from '@/pages/code-editor';
+import { AtlassianManagement } from '@/pages/atlassian-management';
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                   <Route path="/architecture-editor" element={<ArchitectureEditor />} />
                   <Route path="/function-editor" element={<FunctionEditor />} />
                   <Route path="/code-editor" element={<CodeEditor />} />
+                  <Route path="/atlassian" element={<AtlassianManagement />} />
                   <Route path="*" element={<Dashboard />} />
                 </Routes>
               </main>

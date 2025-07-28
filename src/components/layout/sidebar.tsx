@@ -8,7 +8,8 @@ import {
   Brain,
   Network,
   Zap,
-  Code
+  Code,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/architecture-editor', icon: Network, label: '架構編輯器' },
   { to: '/function-editor', icon: Zap, label: '功能編輯器' },
   { to: '/code-editor', icon: Code, label: '代碼編輯器' },
+  { to: '/atlassian', icon: Settings, label: 'Atlassian 管理' },
 ];
 
 export function Sidebar() {
