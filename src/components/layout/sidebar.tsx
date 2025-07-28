@@ -6,7 +6,9 @@ import {
   BookOpen, 
   Gamepad2,
   Brain,
-  Network
+  Network,
+  Zap,
+  Code
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +19,8 @@ const navItems = [
   { to: '/docs', icon: BookOpen, label: '文檔' },
   { to: '/game', icon: Gamepad2, label: "Angela's World" },
   { to: '/architecture-editor', icon: Network, label: '架構編輯器' },
+  { to: '/function-editor', icon: Zap, label: '功能編輯器' },
+  { to: '/code-editor', icon: Code, label: '代碼編輯器' },
 ];
 
 export function Sidebar() {

@@ -12,6 +12,8 @@ import { SystemMonitor } from '@/pages/system-monitor';
 import { Documentation } from '@/pages/documentation';
 import { AngelaGame } from '@/pages/angela-game';
 import ArchitectureEditor from '@/pages/architecture-editor';
+import FunctionEditor from '@/pages/function-editor';
+import CodeEditor from '@/pages/code-editor';
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
                   <Route path="/docs" element={<Documentation />} />
                   <Route path="/game" element={<AngelaGame />} />
                   <Route path="/architecture-editor" element={<ArchitectureEditor />} />
+                  <Route path="/function-editor" element={<FunctionEditor />} />
+                  <Route path="/code-editor" element={<CodeEditor />} />
                   <Route path="*" element={<Dashboard />} />
                 </Routes>
               </main>

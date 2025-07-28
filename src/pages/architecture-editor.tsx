@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -22,7 +22,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Settings, Save, Download, Upload } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Settings, Save, Download, Upload, Layers, Code, Cpu } from 'lucide-react';
+import { ArchitectureStore, ArchitectureConfig, defaultComponentGroups, ComponentGroup } from '@/lib/architecture-store';
 
 // 模組類型定義
 interface ModuleData extends Record<string, unknown> {
@@ -280,6 +283,10 @@ export default function ArchitectureEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [editingNode, setEditingNode] = useState<ModuleData | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [componentGroups, setComponentGroups] = useState<ComponentGroup[]>(defaultComponentGroups);
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [currentConfig, setCurrentConfig] = useState<ArchitectureConfig | null>(null);
+  const [architectureStore] = useState(() => ArchitectureStore.getInstance());
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -318,44 +325,182 @@ export default function ArchitectureEditor() {
     setEditingNode(null);
   };
 
+  const saveArchitecture = async () => {
+    try {
+      const config: ArchitectureConfig = {
+        id: currentConfig?.id || `arch-${Date.now()}`,
+        name: currentConfig?.name || '新架構設計',
+        version: '1.0.0',
+        description: currentConfig?.description || '系統架構設計',
+        nodes,
+        edges,
+        createdAt: currentConfig?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        metadata: {
+          author: 'User',
+          tags: ['unified-ai'],
+          platform: 'web'
+        }
+      };
+      
+      await architectureStore.saveArchitecture(config);
+      setCurrentConfig(config);
+      console.log('架構已保存');
+    } catch (error) {
+      console.error('保存失敗:', error);
+    }
+  };
+
+  const exportArchitecture = async () => {
+    if (!currentConfig) {
+      await saveArchitecture();
+      return;
+    }
+    
+    try {
+      const blob = await architectureStore.exportArchitecture(currentConfig.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentConfig.name}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('導出失敗:', error);
+    }
+  };
+
+  const importArchitecture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    architectureStore.importArchitecture(file)
+      .then(config => {
+        setNodes(config.nodes);
+        setEdges(config.edges);
+        setCurrentConfig(config);
+        console.log('架構已導入');
+      })
+      .catch(error => {
+        console.error('導入失敗:', error);
+      });
+  };
+
+  const filteredNodes = selectedGroup === 'all' 
+    ? nodes 
+    : nodes.filter(node => {
+        const group = componentGroups.find(g => 
+          g.components.includes(node.data.type as string) || 
+          g.id === (node.data as any).category
+        );
+        return group?.id === selectedGroup;
+      });
+
   return (
-    <div className="h-full w-full flex flex-col">
-      {/* 工具欄 */}
-      <div className="flex items-center gap-2 p-4 border-b bg-background">
-        <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          添加模組
-        </Button>
-        <Button variant="outline" size="sm">
-          <Save className="w-4 h-4 mr-2" />
-          保存
-        </Button>
-        <Button variant="outline" size="sm">
-          <Download className="w-4 h-4 mr-2" />
-          導出
-        </Button>
-        <Button variant="outline" size="sm">
-          <Upload className="w-4 h-4 mr-2" />
-          導入
-        </Button>
+    <div className="h-full w-full flex">
+      {/* 左側面板 - 組件分組 */}
+      <div className="w-80 border-r bg-muted/30 flex flex-col">
+        <div className="p-4 border-b">
+          <h3 className="font-semibold mb-4">組件分組</h3>
+          <div className="space-y-2">
+            <Button
+              variant={selectedGroup === 'all' ? 'default' : 'ghost'}
+              className="w-full justify-start"
+              onClick={() => setSelectedGroup('all')}
+            >
+              <Layers className="w-4 h-4 mr-2" />
+              全部組件
+            </Button>
+            {componentGroups.map(group => (
+              <Button
+                key={group.id}
+                variant={selectedGroup === group.id ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setSelectedGroup(group.id)}
+              >
+                <div 
+                  className="w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: group.color }}
+                />
+                {group.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex-1 p-4">
+          <h4 className="font-medium mb-2">組件詳情</h4>
+          {selectedGroup !== 'all' && (
+            <div className="text-sm text-muted-foreground">
+              {componentGroups.find(g => g.id === selectedGroup)?.description}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t">
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div>總節點: {nodes.length}</div>
+            <div>連接線: {edges.length}</div>
+            <div>當前分組: {filteredNodes.length}</div>
+          </div>
+        </div>
       </div>
 
-      {/* React Flow 編輯器 */}
-      <div className="flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-          onNodeDoubleClick={(_, node) => editModule(node.data as ModuleData)}
-        >
-          <Controls />
-          <MiniMap />
-          <Background />
-        </ReactFlow>
+      {/* 主要內容區 */}
+      <div className="flex-1 flex flex-col">
+        {/* 工具欄 */}
+        <div className="flex items-center justify-between p-4 border-b bg-background">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              添加模組
+            </Button>
+            <Separator orientation="vertical" className="h-6" />
+            <Button variant="outline" size="sm" onClick={saveArchitecture}>
+              <Save className="w-4 h-4 mr-2" />
+              保存架構
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportArchitecture}>
+              <Download className="w-4 h-4 mr-2" />
+              導出架構
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <label htmlFor="import-file">
+                <Upload className="w-4 h-4 mr-2" />
+                導入架構
+              </label>
+            </Button>
+            <input
+              id="import-file"
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={importArchitecture}
+            />
+          </div>
+          
+          <div className="text-sm text-muted-foreground">
+            {currentConfig ? `已加載: ${currentConfig.name}` : '未保存的架構'}
+          </div>
+        </div>
+
+        {/* React Flow 編輯器 */}
+        <div className="flex-1">
+          <ReactFlow
+            nodes={filteredNodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            fitView
+            onNodeDoubleClick={(_, node) => editModule(node.data as ModuleData)}
+          >
+            <Controls />
+            <MiniMap />
+            <Background />
+          </ReactFlow>
+        </div>
       </div>
 
       {/* 添加模組對話框 */}
