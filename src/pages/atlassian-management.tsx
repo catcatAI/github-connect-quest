@@ -24,7 +24,10 @@ import {
   Plus,
   Search,
   Clock,
-  Zap
+  Zap,
+  Wifi,
+  WifiOff,
+  CloudOff
 } from 'lucide-react';
 import { 
   AtlassianConfig, 
@@ -39,6 +42,8 @@ import {
 // 移除重复的接口定义，使用从 atlassian-api 导入的接口
 
 export function AtlassianManagement() {
+  // 初始化 API 客戶端
+  const { client } = useAtlassianApi();
   const [services, setServices] = useState<AtlassianService[]>([
     { name: 'Confluence', status: 'connected', lastSync: '2 分鐘前', health: 95 },
     { name: 'Jira', status: 'connected', lastSync: '1 分鐘前', health: 88 },
@@ -54,6 +59,42 @@ export function AtlassianManagement() {
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [offlineStatus, setOfflineStatus] = useState<any>(null);
+  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // 監控網絡狀態和離線功能
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // 定期更新離線狀態和系統健康
+    const updateStatus = async () => {
+      if (client) {
+        try {
+          const offline = client.getOfflineStatus();
+          setOfflineStatus(offline);
+          
+          const health = await client.getSystemHealth();
+          setSystemHealth(health);
+        } catch (error) {
+          console.warn('無法獲取狀態:', error);
+        }
+      }
+    };
+
+    updateStatus();
+    const interval = setInterval(updateStatus, 30000); // 每30秒更新
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
+    };
+  }, [client]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -139,9 +180,34 @@ export function AtlassianManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Atlassian 管理</h1>
-        <p className="text-muted-foreground">管理 Rovo Dev Agents 和 Atlassian 服務集成</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Atlassian 管理</h1>
+          <p className="text-muted-foreground">管理 Rovo Dev Agents 和 Atlassian 服務集成</p>
+        </div>
+        
+        {/* 網絡狀態指示器 */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {isOnline ? (
+              <Wifi className="h-5 w-5 text-green-500" />
+            ) : (
+              <WifiOff className="h-5 w-5 text-red-500" />
+            )}
+            <span className="text-sm text-muted-foreground">
+              {isOnline ? '在線' : '離線'}
+            </span>
+          </div>
+          
+          {offlineStatus && (
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-blue-500" />
+              <span className="text-xs text-muted-foreground">
+                緩存: {offlineStatus.cacheSize} | 隊列: {offlineStatus.queueSize}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {connectionStatus === 'success' && (
@@ -158,6 +224,28 @@ export function AtlassianManagement() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             連接失敗。請檢查您的配置信息並重試。
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isOnline && (
+        <Alert>
+          <CloudOff className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              目前處於離線模式。部分功能可能受限，但您可以查看緩存數據。
+              {offlineStatus?.queueSize > 0 && ` 有 ${offlineStatus.queueSize} 個操作等待同步。`}
+            </span>
+            {client && offlineStatus?.queueSize > 0 && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => client.syncOfflineQueue()}
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                同步
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}
