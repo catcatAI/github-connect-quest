@@ -2,6 +2,8 @@
 
 ## Project info
 
+This project is part of the larger `Unified-AI-Project` monorepo, focusing on GitHub integration and automation workflows within the AI ecosystem.
+
 For project collaboration guidelines, please see the [PROJECTS_COLLABORATION_GUIDE_Version2.md](../Unified-AI-Project/PROJECTS_COLLABORATION_GUIDE_Version2.md).
 
 
@@ -74,3 +76,6 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+---
+*Last Updated: 2025-08-10*
